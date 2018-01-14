@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.vibrationtiles" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
+    <name>Vibration tiles</name>
+    <description>
+      App developed for iot exam at kit karlsruhe. App needs glove wearable to function properly. In this game you have to press down on the screen with the corresponding finger on the other hand as soon as the vibration starts. Be quick or you lose!
+    </description>
+    <author email="utduu@student.kit.edu">
+      Tom George
+    </author>
+    <content src="index.html" />
+    <preference name="DisallowOverscroll" value="true" />
+    <preference name="ios-statusbarstyle" value="black-opaque" />
+    <preference name="fullscreen" value="true" />
+    <preference name="permissions" value="none" />
+    <preference name="orientation" value="landscape" />
+    <plugin name="cordova-plugin-screen-orientation" />
+</widget>

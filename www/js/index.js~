@@ -1,0 +1,60 @@
+function initialize(){
+    //document.addEventListener('deviceready', onDeviceReady);
+    var btn = document.getElementById("go_btn");
+    btn.addEventListener('touchstart', go_btn_touched);
+    btn.addEventListener('mousedown', go_btn_touched);
+    console.log(screen.width);
+    console.log(screen);
+    
+    screen.orientation = "landscape";
+    screen.orientation.lock('landscape');
+}
+
+
+function go_btn_touched(event){
+    event.target.setAttribute("src", "./img/go_btn_pressed.png");
+    window.open("./game_surface.html", "_self", false);
+}
+
+
+function startGame(){
+    console.log(document);
+     // create game surface
+    var c = document.createElement("canvas");
+    // var width = (window.innerWidth > 0) ? window.innerWidth : screen.width;
+    // var height = (window.innerHeight > 0) ? window.innerHeight : screen.height;
+    c.width  = window.screen.availWidth;
+    c.height = window.screen.availHeight;
+    c.setAttribute("id", "game_canvas");
+    document.body.appendChild(c)
+    
+    var ctx = c.getContext('2d');
+    var width=c.width/4;
+    
+    ctx.lineWidth = 10;
+    // draw 4 vertical lines
+    for(var i = 1; i<4; ++i){
+	ctx.beginPath();
+	ctx.moveTo(i*width,0);
+	ctx.lineTo(i*width,c.height);
+	ctx.stroke();
+    }
+
+    countdown(3, ctx);
+}
+
+function countdown(digit, ctx){
+    ctx.clearRect(ctx.canvas.width/2-200,0,400,ctx.canvas.height);
+    ctx.beginPath();
+    ctx.moveTo(ctx.canvas.width/2,0);
+    ctx.lineTo(ctx.canvas.width/2,ctx.canvas.height);
+    ctx.stroke();
+    if(digit>0){
+	ctx.fillStyle = "#FF0000";
+	ctx.font = "300px Arial";
+	ctx.textAlign = "center";
+	ctx.fillText(digit,ctx.canvas.width/2,ctx.canvas.height/2-15);
+	setTimeout(function(){
+	    countdown(digit-1,ctx)},1000);
+    }
+}

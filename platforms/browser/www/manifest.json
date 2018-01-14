@@ -1,0 +1,12 @@
+{
+  "background_color": "#FFF",
+  "display": "standalone",
+  "name": "Vibration tiles",
+  "short_name": "Vibration tiles",
+  "version": "com.vibrationtiles",
+  "description": "App developed for iot exam at kit karlsruhe. App needs glove wearable to function properly. In this game you have to press down on the screen with the corresponding finger on the other hand as soon as the vibration starts. Be quick or you lose!",
+  "author": "Tom George",
+  "icons": [],
+  "orientation": "landscape",
+  "start_url": "index.html"
+}
