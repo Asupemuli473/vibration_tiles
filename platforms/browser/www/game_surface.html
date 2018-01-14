@@ -14,10 +14,6 @@
 	<title>Vibration tiles</title>
   </head>
   <body>
-    <!-- <script type="text/javascript"> -->
-    <!--   startGame(); -->
-
-    <!-- </script> -->
     <div id="game_div">
       <div id="btn1"></div>
       <div id="btn2"></div>
@@ -25,8 +21,30 @@
     <div id="btn4"></div>
     </div>
 
-    <script>
-      startGame();
+    <script type="text/javascript">
+      document.getElementById("btn1").addEventListener("touchstart", div_pressed);
+      document.getElementById("btn2").addEventListener("touchstart", div_pressed);
+      document.getElementById("btn3").addEventListener("touchstart", div_pressed);
+      document.getElementById("btn4").addEventListener("touchstart", div_pressed);
+
+      document.getElementById("btn1").addEventListener("mousedown", div_pressed);
+      document.getElementById("btn2").addEventListener("mousedown", div_pressed);
+      document.getElementById("btn3").addEventListener("mousedown", div_pressed);
+      document.getElementById("btn4").addEventListener("mousedown", div_pressed);
+
+      document.getElementById("btn1").addEventListener("touchend", div_released);
+      document.getElementById("btn2").addEventListener("touchend", div_released);
+      document.getElementById("btn3").addEventListener("touchend", div_released);
+      document.getElementById("btn4").addEventListener("touchend", div_released);
+
+      document.getElementById("btn1").addEventListener("mouseup", div_released);
+      document.getElementById("btn2").addEventListener("mouseup", div_released);
+      document.getElementById("btn3").addEventListener("mouseup", div_released);
+      document.getElementById("btn4").addEventListener("mouseup", div_released);
+
+      
+      
+      // startGame();
     </script>
     </div>
   </body>

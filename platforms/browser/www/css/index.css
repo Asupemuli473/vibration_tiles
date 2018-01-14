@@ -8,13 +8,9 @@
 
 h1 {
     font-size:2.5em;
-    font-family: 'Roboto Slab';
-    
+    font-family: 'Roboto Slab';   
 }
 
-.app{
-    text-align:center;
-}
 
 html, body {
   width:  100%;
@@ -22,11 +18,17 @@ html, body {
   margin: 0px;
 }
 
+#welcome_screen{
+    overflow:hidden;
+    text-align:center;
+    width: 100vw;
+    height: 100vh;
+    
+}
 
 #game_div{
     width: 100vw;
     height: 100vh;
-    background-color:#DD0000;
     padding: 0px;
     margin: 0px;
     overflow:hidden;
@@ -39,18 +41,12 @@ html, body {
     float:left;
 }
 
-#btn1{
-    background-color:#bb0000;
+
+#btn1, #btn2, #btn3 {
+    box-sizing: border-box;
+    border-color:black;
+    border-width:20px;
+    border-right:solid;
 }
 
-#btn2{
-    background-color:#00dd00;
-}
 
-#btn3{
-    background-color:#0000ee;
-}
-
-#btn4{
-    background-color:#eedd00;
-}
