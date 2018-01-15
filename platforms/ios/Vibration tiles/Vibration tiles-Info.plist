@@ -48,5 +48,18 @@
     <array>
       <string>UIInterfaceOrientationLandscapeLeft</string>
     </array>
+    <key>NSBluetoothPeripheralUsageDescription</key>
+    <string>Connect to teco wearable used to play the game</string>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+      <key>NSExceptionDomains</key>
+      <dict>
+        <key>192.168.1.104</key>
+        <dict>
+          <key>NSExceptionAllowsInsecureHTTPLoads</key>
+          <true/>
+        </dict>
+      </dict>
+    </dict>
   </dict>
 </plist>

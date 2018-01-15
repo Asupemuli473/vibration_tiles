@@ -30,7 +30,8 @@ module.exports.metadata =
 {
     "cordova-plugin-screen-orientation": "3.0.1",
     "cordova-plugin-compat": "1.2.0",
-    "cordova-plugin-ble-central": "1.1.4"
+    "cordova-plugin-ble-central": "1.1.4",
+    "cordova-plugin-whitelist": "1.3.3"
 }
 // BOTTOM OF METADATA
 });

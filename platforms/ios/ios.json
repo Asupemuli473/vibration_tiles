@@ -7,18 +7,54 @@
     "files": {
       "config.xml": {
         "parents": {
-          "/*": []
+          "/*": [],
+          "/widget": [
+            {
+              "xml": "<feature name=\"BLE\"><param name=\"ios-package\" onload=\"true\" value=\"BLECentralPlugin\" /></feature>",
+              "count": 1
+            }
+          ]
         }
       },
       "*-Info.plist": {
         "parents": {
-          "UIBackgroundModes": []
+          "UIBackgroundModes": [],
+          "NSBluetoothPeripheralUsageDescription": [
+            {
+              "xml": "<string>Connect to teco wearable used to play the game</string>",
+              "count": 1
+            }
+          ]
         }
       }
     }
   },
-  "installed_plugins": {},
+  "installed_plugins": {
+    "cordova-plugin-compat": {
+      "PACKAGE_NAME": "com.vibrationtiles"
+    },
+    "cordova-plugin-ble-central": {
+      "BLUETOOTH_USAGE_DESCRIPTION": "Connect to teco wearable used to play the game",
+      "PACKAGE_NAME": "com.vibrationtiles"
+    },
+    "cordova-plugin-whitelist": {
+      "PACKAGE_NAME": "com.vibrationtiles"
+    }
+  },
   "dependent_plugins": {},
-  "modules": [],
-  "plugin_metadata": {}
+  "modules": [
+    {
+      "id": "cordova-plugin-ble-central.ble",
+      "file": "plugins/cordova-plugin-ble-central/www/ble.js",
+      "pluginId": "cordova-plugin-ble-central",
+      "clobbers": [
+        "ble"
+      ]
+    }
+  ],
+  "plugin_metadata": {
+    "cordova-plugin-compat": "1.2.0",
+    "cordova-plugin-ble-central": "1.1.4",
+    "cordova-plugin-whitelist": "1.3.3"
+  }
 }

@@ -12,6 +12,9 @@
     },
     "cordova-plugin-ble-central": {
       "PACKAGE_NAME": "com.vibrationtiles"
+    },
+    "cordova-plugin-whitelist": {
+      "PACKAGE_NAME": "com.vibrationtiles"
     }
   },
   "dependent_plugins": {

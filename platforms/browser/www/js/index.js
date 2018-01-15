@@ -2,15 +2,10 @@ var LINEWIDTH_COLUMN_LINE = 10;
 
 document.addEventListener("deviceready", initialize, false);
 
-function scan_and_connect_glove(){
-    document.getElementById("msg").innerHTML = "Scanning";
-    ble.scan([], 5, function(device){
-	if(device.name == "TECO Wearable 4"){
-	    ble.connect(device.id, connect_success, connect_fail);
-	}
-    }, function(){
-	document.getElementById("msg").innerHTML = "Scan fail";
-    });
+function connect_glove(){
+    document.getElementById("msg").innerHTML = "Connecting...";
+    ble.connect("713D0000-503E-4C75-BA94-3148F18D941E", connect_success, connect_fail);
+    
 }
 
 function ble_disable(){
@@ -18,16 +13,16 @@ function ble_disable(){
 }
 
 function connect_success(peripheral){
-    document.getElementById("msg").innerHTML = "Erfolgreich connected";
+    document.getElementById("msg").innerHTML = "Successfully connected";
 }
 
 function connect_fail(peripheral){
-    document.getElementById("msg").innerHTML = "Fehler beim connecten";
+    document.getElementById("msg").innerHTML = "Error while connecting.";
 }
 
 function initialize(){
-    document.getElementById("msg").innerHTML = ble;
-    ble.isEnabled(scan_and_connect_glove, ble_disabled);
+    document.getElementById("msg").innerHTML = "Trying to connect...";
+    // ble.isEnabled(connect_glove, ble_disabled);
     
     var btn = document.getElementById("go_btn");
     btn.addEventListener('touchstart', go_btn_touched);
@@ -39,7 +34,6 @@ function initialize(){
     document.documentElement.style.webkitTouchCallout = "none";
     document.documentElement.style.webkitUserSelect = "none";
 
-    
     screen.orientation = "landscape";
     screen.orientation.lock('landscape');
 }
