@@ -3,6 +3,7 @@ var connected = false;
 var connecting = false;
 var connected_device;
 var FPS = 30;
+var ctx;
 
 document.addEventListener("deviceready", initialize, false);
 
@@ -37,7 +38,8 @@ function initialize(){
     document.getElementById("game_div").style.display="none";
     document.getElementById("drawing_canvas").width = document.body.clientWidth;
     document.getElementById("drawing_canvas").height = document.body.clientHeight;
-    
+    ctx = document.getElementById("drawing_canvas").getContext('2d');
+    ctx.font = "15px Roboto Slab";
     
     document.documentElement.style.webkitTouchCallout = "none";
     document.documentElement.style.webkitUserSelect = "none";
@@ -106,12 +108,12 @@ function go_btn_touched(event){
 }
 
 function go_btn_released(event){
-    if(connected){
+    // if(connected){
     	start_game();
-    }
-    else{
-    	event.target.setAttribute("src", "./img/go_btn.png");
-    }
+    // }
+    // else{
+    // 	event.target.setAttribute("src", "./img/go_btn.png");
+    // }
 }
 
 
@@ -122,12 +124,17 @@ var round = 0;
 var sequence = 0;
 var finger_pressed = 0;
 var g_o = false;
+var score = 0;
+var steps;
+var step;
+
 
 // calcs new seq and writes it to wearable
 function set_next_sequence(){
     var min = 0;
     var max = 15;
     sequence = Math.floor((Math.random() * (max - min)) + min);
+    console.log(sequence);
     write_to_wearable(sequence);
 }
 
@@ -145,6 +152,7 @@ function set_finger_pressed(num){
     var code = Math.pow(2,num-1); // format into binary
     if(legal_finger(code)){
 	sequence = sequence - code;
+	score = score + steps - step;
 	write_to_wearable(sequence);
 	return true;
     }
@@ -170,31 +178,34 @@ function generate_next_round(){
 	    if(duration_round > 1024 && this.round % 10 == 0){
 		duration_round = duration_round / 2;
 	    }
-	    var steps = duration_round/1000*30;
-	    var step = 0;
+	    steps = duration_round/1000*FPS;
+	    step = 0;
 	    var step_size_line = document.getElementById("drawing_canvas").height/steps;
 	    
 	    setTimeout(function(){
-		draw_line(step,steps,step_size_line);
-	    }, Math.floor(1000/FPS));
+		draw_line(step_size_line);
+	    }, 1000/FPS);
 	    setTimeout(generate_next_round, duration_round);
 	}
     }
 }
 
-function draw_line(step, steps, step_size){
-    var ctx = document.getElementById("drawing_canvas").getContext('2d');
+function draw_line(step_size){
     if(step<steps){
-	if(step>0){
-	    ctx.clearRect(0,0,ctx.canvas.width,step*step_size);
-	}
+	ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+	ctx.textAlign = "start";
+	ctx.fillText("Round "+(round+1),0,-5+step*step_size);
+	ctx.fillText("Round "+(round),0,step*step_size+15);
+	ctx.textAlign = "end";
+	ctx.fillText("Score "+score,ctx.canvas.width,-5+step*step_size);
 	ctx.beginPath();
 	ctx.moveTo(0,step*step_size);
-	ctx.lineTo(ctx.canvas.width,Math.floor(step*step_size));
+	ctx.lineTo(ctx.canvas.width,step*step_size);
 	ctx.stroke();
+	step = step + 1;
 	setTimeout(function(){
-	    draw_line(step+1,steps,step_size);
-	}, Math.floor(1000/FPS));
+	    draw_line(step_size);
+	}, 1000/FPS);
     }
 }
 
@@ -244,27 +255,27 @@ function btn_to_int(btn_id){
 // code is 4bit long number to determine which off the motors should be turned on
 function write_to_wearable(code){
     // default all off
-    data[0] = 0x00;
-    data[1] = 0x00;
-    data[2] = 0x00;
-    data[3] = 0x00;
+    // data[0] = 0x00;
+    // data[1] = 0x00;
+    // data[2] = 0x00;
+    // data[3] = 0x00;
 
-    if(8 & code){
-	data[0] = 0xFF;
-    }
-    if(4 & code){
-	data[1] = 0xFF;
-    }
-    if(2 & code){
-	data[2] = 0xFF;
-    }
-    if(1 & code){
-	data[3] = 0xFF;
-    }
-    ble.writeWithoutResponse(connected_device.id, VIB_SERVICE, VIB_CHARACTERISTIC, data.buffer, function(){
-    }, function(){
-	console.log("error while writing to wearable");
-	    // todo error handling here
-	});
+    // if(8 & code){
+    // 	data[0] = 0xFF;
+    // }
+    // if(4 & code){
+    // 	data[1] = 0xFF;
+    // }
+    // if(2 & code){
+    // 	data[2] = 0xFF;
+    // }
+    // if(1 & code){
+    // 	data[3] = 0xFF;
+    // }
+    // ble.writeWithoutResponse(connected_device.id, VIB_SERVICE, VIB_CHARACTERISTIC, data.buffer, function(){
+    // }, function(){
+    // 	console.log("error while writing to wearable");
+    // 	    // todo error handling here
+    // 	});
     
 }
