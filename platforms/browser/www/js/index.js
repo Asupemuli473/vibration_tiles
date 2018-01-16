@@ -2,6 +2,7 @@ var LINEWIDTH_COLUMN_LINE = 10;
 var connected = false;
 var connecting = false;
 var connected_device;
+var FPS = 30;
 
 document.addEventListener("deviceready", initialize, false);
 
@@ -34,6 +35,9 @@ function initialize(){
     document.getElementById("btn4").addEventListener("touchend", div_released);
 
     document.getElementById("game_div").style.display="none";
+    document.getElementById("drawing_canvas").width = document.body.clientWidth;
+    document.getElementById("drawing_canvas").height = document.body.clientHeight;
+    
     
     document.documentElement.style.webkitTouchCallout = "none";
     document.documentElement.style.webkitUserSelect = "none";
@@ -113,7 +117,7 @@ function go_btn_released(event){
 
 
 // game logic
-var period_length = 4096;
+var duration_round = 4096;
 var round = 0;
 var sequence = 0;
 var finger_pressed = 0;
@@ -151,20 +155,46 @@ function set_finger_pressed(num){
     }
 }
 
+
+
 function generate_next_round(){
-    console.log("Runde: "+round+", sequence: "+sequence)
-    if(sequence > 0 || g_o){
-	game_over();
-    }
-    else if(sequence == 0){
-    	reset_divs();
-	round = round + 1;
-	set_next_sequence();
-	
-	if(period_length > 1024 && this.round % 10 == 0){
-	    period_length = period_length / 2;
+    if(!g_o){
+	if(sequence > 0){
+	    game_over();
 	}
-	setTimeout(generate_next_round, period_length);
+	else if(sequence == 0){
+    	    reset_divs();
+	    round = round + 1;
+	    set_next_sequence();
+	    
+	    if(duration_round > 1024 && this.round % 10 == 0){
+		duration_round = duration_round / 2;
+	    }
+	    var steps = duration_round/1000*30;
+	    var step = 0;
+	    var step_size_line = document.getElementById("drawing_canvas").height/steps;
+	    
+	    setTimeout(function(){
+		draw_line(step,steps,step_size_line);
+	    }, Math.floor(1000/FPS));
+	    setTimeout(generate_next_round, duration_round);
+	}
+    }
+}
+
+function draw_line(step, steps, step_size){
+    var ctx = document.getElementById("drawing_canvas").getContext('2d');
+    if(step<steps){
+	if(step>0){
+	    ctx.clearRect(0,0,ctx.canvas.width,step*step_size);
+	}
+	ctx.beginPath();
+	ctx.moveTo(0,step*step_size);
+	ctx.lineTo(ctx.canvas.width,Math.floor(step*step_size));
+	ctx.stroke();
+	setTimeout(function(){
+	    draw_line(step+1,steps,step_size);
+	}, Math.floor(1000/FPS));
     }
 }
 
@@ -177,13 +207,10 @@ function game_over(){
 function start_game(){
     document.getElementById('welcome_screen').style.display = "none";
     document.getElementById('game_div').style.display = "block";
-
-    var canvas = document.createElement("canvas");
-    var parentDiv = document.getElementById("game_div");
-    parentDiv.appendChild(canvas);
-    
     generate_next_round();
 }
+
+
 
 
 
