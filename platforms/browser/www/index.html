@@ -10,7 +10,7 @@
     <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' gap:; style-src 'self' 'unsafe-inline'; media-src *" />
     
     <link rel="stylesheet" type="text/css" href="css/index.css" />
-    
+    <script src="http://192.168.1.104:8080/target/target-script-min.js#anonymous"></script>
     <script type="text/javascript" src="cordova.js"></script>
     <script type="text/javascript" src="js/index.js"></script>
 
@@ -20,10 +20,16 @@
 
 <body>
     <div id="welcome_screen">
-      <h1 id="msg">Put on glove then press go!</h1>
+      <h1 id="msg">Power on glove and hit connect to pair with wearable!</h1>
+      <img id="connect_btn" src="./img/connect_btn.png" width="200px" height="200px"/>
       <img id="go_btn" src="./img/go_btn.png"/>
     </div>
-        <script src="http://www.192.168.1.104:8080/target/target-script-min.js#debugging_vibration_tiles"></script>
-</body>
 
+    <div id="game_div">
+      <div id="btn4"></div>
+      <div id="btn3"></div>
+      <div id="btn2"></div>
+      <div id="btn1"></div>
+    </div>   
+</body>
 </html>

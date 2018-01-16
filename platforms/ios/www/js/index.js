@@ -1,69 +1,238 @@
 var LINEWIDTH_COLUMN_LINE = 10;
+var connected = false;
+var connecting = false;
+var connected_device;
 
 document.addEventListener("deviceready", initialize, false);
 
-function connect_glove(){
-    document.getElementById("msg").innerHTML = "Connecting...";
-    ble.connect("713D0000-503E-4C75-BA94-3148F18D941E", connect_success, connect_fail);
-    
-}
+var data = new Uint8Array(4);
 
-function ble_disable(){
-    document.getElementById("msg").innerHTML = "You have to enable bluetooth."
-}
+var VIB_SERVICE	       	= "713D0000-503E-4C75-BA94-3148F18D941E";
+var VIB_CHARACTERISTIC	= "713D0003-503E-4C75-BA94-3148F18D941E";
 
-function connect_success(peripheral){
-    document.getElementById("msg").innerHTML = "Successfully connected";
-}
 
-function connect_fail(peripheral){
-    document.getElementById("msg").innerHTML = "Error while connecting.";
-}
 
 function initialize(){
-    document.getElementById("msg").innerHTML = "Trying to connect...";
-    // ble.isEnabled(connect_glove, ble_disabled);
+    var go_btn = document.getElementById("go_btn");
+    var connect_btn = document.getElementById("connect_btn");
     
-    var btn = document.getElementById("go_btn");
-    btn.addEventListener('touchstart', go_btn_touched);
-    btn.addEventListener('mousedown', go_btn_touched);
+    go_btn.addEventListener('touchstart', go_btn_touched);
+    go_btn.addEventListener('touchend', go_btn_released);
     
-    btn.addEventListener('touchend', go_btn_released);
-    btn.addEventListener('mouseup', go_btn_released);
+    connect_btn.addEventListener('touchstart', connect_btn_touched);
+    connect_btn.addEventListener('touchend', connect_btn_released);
+
+    
+    document.getElementById("btn1").addEventListener("touchstart", div_pressed);
+    document.getElementById("btn2").addEventListener("touchstart", div_pressed);
+    document.getElementById("btn3").addEventListener("touchstart", div_pressed);
+    document.getElementById("btn4").addEventListener("touchstart", div_pressed);
+    
+    document.getElementById("btn1").addEventListener("touchend", div_released);
+    document.getElementById("btn2").addEventListener("touchend", div_released);
+    document.getElementById("btn3").addEventListener("touchend", div_released);
+    document.getElementById("btn4").addEventListener("touchend", div_released);
+
+    document.getElementById("game_div").style.display="none";
     
     document.documentElement.style.webkitTouchCallout = "none";
     document.documentElement.style.webkitUserSelect = "none";
 
-    screen.orientation = "landscape";
-    screen.orientation.lock('landscape');
 }
 
+function set_up_bt(){
+    ble.isEnabled(function(){
+	document.getElementById("msg").innerHTML = "Scanning...";
+	document.getElementById("msg").style.color = "#FFD700";
+	scan_and_connect_glove();
+    }, function(){
+	document.getElementById("msg").innerHTML = "You have to enable bluetooth."
+	document.getElementById("msg").style.color = "#FF0000";
+    });
+}
+
+
+function scan_and_connect_glove(){
+    ble.scan([], 5, function(device) {
+	if (device.name === "TECO Wearable 4") {
+	    ble.connect(device.id, function(){
+		document.getElementById("msg").innerHTML = "Successfully connected. Ready to play!";
+		document.getElementById("msg").style.color = "#00FF00";
+		connected = true;
+		connected_device = device;
+	    }, function(){
+		console.log("error while connecting");
+		document.getElementById("msg").innerHTML = "Error while connecting. Make sure the device is turned on";
+		document.getElementById("msg").style.color = "#FF0000";
+	    });
+	}
+    }, function() {
+	    document.getElementById("msg").innerHTML = "Teco Wearable 4 not found. Make sure its turned on!";
+	});	    
+}
+
+    
+
+
+
+function connect_btn_touched(event){
+    event.target.setAttribute("src", "./img/connect_btn_pressed.png");
+}
+
+function writeDone(){
+    console.log("write succ");
+}
+
+function writeFail(){
+    console.log("write fail");
+}
+
+
+
+function connect_btn_released(event){
+    event.target.setAttribute("src", "./img/connect_btn.png");
+    if(!connecting && !connected){
+	connecting = true;
+	set_up_bt();
+    }
+}
 
 function go_btn_touched(event){
     event.target.setAttribute("src", "./img/go_btn_pressed.png");
 }
 
 function go_btn_released(event){
-    window.open("./game_surface.html", "_self", false);
+    if(connected){
+    	start_game();
+    }
+    else{
+    	event.target.setAttribute("src", "./img/go_btn.png");
+    }
 }
 
 
-function startGame(){
-    // initialise bluetooth stuff
-    
-    // start countdown
 
-    // start 
-    
+// game logic
+var period_length = 4096;
+var round = 0;
+var sequence = 0;
+var finger_pressed = 0;
+var g_o = false;
+
+// calcs new seq and writes it to wearable
+function set_next_sequence(){
+    var min = 0;
+    var max = 15;
+    sequence = Math.floor((Math.random() * (max - min)) + min);
+    write_to_wearable(sequence);
 }
 
+// checks whether or not a finger is legal (binary coded) 8 index, 4 middle, 2 ring, 1 pinky (right hand pressing on div)
+function legal_finger(code){
+    if(sequence & code){
+	return true;
+    }
+    return false;
+}
+
+// function to update modell when finger is pressed, returns whether or not set finger was legal
+// num: div order: 4 - 3 - 2 - 1
+function set_finger_pressed(num){
+    var code = Math.pow(2,num-1); // format into binary
+    if(legal_finger(code)){
+	sequence = sequence - code;
+	write_to_wearable(sequence);
+	return true;
+    }
+    else {
+	g_o = true;
+	game_over();
+	return false;
+    }
+}
+
+function generate_next_round(){
+    console.log("Runde: "+round+", sequence: "+sequence)
+    if(sequence > 0 || g_o){
+	game_over();
+    }
+    else if(sequence == 0){
+    	reset_divs();
+	round = round + 1;
+	set_next_sequence();
+	
+	if(period_length > 1024 && this.round % 10 == 0){
+	    period_length = period_length / 2;
+	}
+	setTimeout(generate_next_round, period_length);
+    }
+}
+
+function game_over(){
+    // todo let vibrate three times
+    write_to_wearable(0);
+    console.log("game over");
+}
+
+function start_game(){
+    document.getElementById('welcome_screen').style.display = "none";
+    document.getElementById('game_div').style.display = "block";    
+    generate_next_round();
+}
+
+
+
+function reset_divs(){
+    var num_divs = 4;
+    for(var i = 1;i<num_divs+1;i++){
+	document.getElementById('btn'+i).style.backgroundColor = "#FFFFFF";
+    }
+}
 
 function div_pressed(event){
-    event.target.style.backgroundColor = "#000000";
+    var i = btn_to_int(event.target.id);
+    if(set_finger_pressed(i)){
+    	event.target.style.backgroundColor = "#00FF00";
+    }
+    else{
+    	event.target.style.backgroundColor = "#FF0000";
+    }
+
 }
 
 function div_released(event){
     event.target.style.backgroundColor = "#FFFFFF";
-
 }
-			   
+
+function btn_to_int(btn_id){
+    return parseInt(btn_id.substring(3));
+}
+
+
+// code is 4bit long number to determine which off the motors should be turned on
+function write_to_wearable(code){
+    // default all off
+    data[0] = 0x00;
+    data[1] = 0x00;
+    data[2] = 0x00;
+    data[3] = 0x00;
+
+    if(8 & code){
+	data[0] = 0xFF;
+    }
+    if(4 & code){
+	data[1] = 0xFF;
+    }
+    if(2 & code){
+	data[2] = 0xFF;
+    }
+    if(1 & code){
+	data[3] = 0xFF;
+    }
+    ble.writeWithoutResponse(connected_device.id, VIB_SERVICE, VIB_CHARACTERISTIC, data.buffer, function(){
+    }, function(){
+	console.log("error while writing to wearable");
+	    // todo error handling here
+	});
+    
+}

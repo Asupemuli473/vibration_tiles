@@ -73,12 +73,10 @@ function scan_and_connect_glove(){
 
     
 
-function go_btn_touched(event){
-    event.target.setAttribute("src", "./img/go_btn_pressed.png");
-}
+
 
 function connect_btn_touched(event){
-    // load new file
+    event.target.setAttribute("src", "./img/connect_btn_pressed.png");
 }
 
 function writeDone(){
@@ -92,16 +90,20 @@ function writeFail(){
 
 
 function connect_btn_released(event){
-    // change back button
+    event.target.setAttribute("src", "./img/connect_btn.png");
     if(!connecting && !connected){
 	connecting = true;
 	set_up_bt();
     }
 }
 
+function go_btn_touched(event){
+    event.target.setAttribute("src", "./img/go_btn_pressed.png");
+}
+
 function go_btn_released(event){
     if(connected){
-	start_game();
+    	start_game();
     }
     else{
     	event.target.setAttribute("src", "./img/go_btn.png");
@@ -115,67 +117,77 @@ var period_length = 4096;
 var round = 0;
 var sequence = 0;
 var finger_pressed = 0;
-console.log(sessionStorage.getItem('device'));
-connected_device = JSON.parse(sessionStorage.getItem('device')); // extract from sessionstorage
+var g_o = false;
 
 // calcs new seq and writes it to wearable
 function set_next_sequence(){
     var min = 0;
     var max = 15;
-    sequence = (Math.random() * (max - min)) + min;
+    sequence = Math.floor((Math.random() * (max - min)) + min);
     write_to_wearable(sequence);
 }
 
-// checks whether or not a finger is leagl (binary coded) 8 - index, 4 - middle, ...
+// checks whether or not a finger is legal (binary coded) 8 index, 4 middle, 2 ring, 1 pinky (right hand pressing on div)
 function legal_finger(code){
     if(sequence & code){
 	return true;
     }
-    game_over();
     return false;
 }
 
 // function to update modell when finger is pressed, returns whether or not set finger was legal
-// num: 1-4, 4 being index,...
+// num: div order: 4 - 3 - 2 - 1
 function set_finger_pressed(num){
-    console.log("finger pressed " + num);
     var code = Math.pow(2,num-1); // format into binary
-    finger_pressed = finger_pressed + code;
-    return legal_finger(code);
-}
-
-
-// function to update date after finger is released
-function set_finger_released(num){
-    finger_pressed = finger_pressed - Math.pow(2,num-1);
+    if(legal_finger(code)){
+	sequence = sequence - code;
+	write_to_wearable(sequence);
+	return true;
+    }
+    else {
+	g_o = true;
+	game_over();
+	return false;
+    }
 }
 
 function generate_next_round(){
-    //if(finger_pressed == sequence){
-    round = round + 1;
-
-    set_next_sequence();
-    
-    if(period_length > 1024 && this.round % 100 == 0){
-	period_length = period_length / 2;
+    console.log("Runde: "+round+", sequence: "+sequence)
+    if(sequence > 0 || g_o){
+	game_over();
     }
-    setTimeout(generate_next_round, period_length);
-	// }
-	// else{
-	//     game_over();
-	// }
+    else if(sequence == 0){
+    	reset_divs();
+	round = round + 1;
+	set_next_sequence();
+	
+	if(period_length > 1024 && this.round % 10 == 0){
+	    period_length = period_length / 2;
+	}
+	setTimeout(generate_next_round, period_length);
+    }
 }
 
 function game_over(){
-
+    // todo let vibrate three times
+    write_to_wearable(0);
+    console.log("game over");
 }
 
 function start_game(){
     document.getElementById('welcome_screen').style.display = "none";
-    document.getElementById('game_div').style.display = "block";
+    document.getElementById('game_div').style.display = "block";    
     generate_next_round();
 }
 
+
+
+function reset_divs(){
+    var num_divs = 4;
+    for(var i = 1;i<num_divs+1;i++){
+	document.getElementById('btn'+i).style.backgroundColor = "#FFFFFF";
+    }
+}
 
 function div_pressed(event){
     var i = btn_to_int(event.target.id);
@@ -189,7 +201,6 @@ function div_pressed(event){
 }
 
 function div_released(event){
-    set_finger_released(btn_to_int(event.target.id));
     event.target.style.backgroundColor = "#FFFFFF";
 }
 
@@ -202,21 +213,21 @@ function btn_to_int(btn_id){
 function write_to_wearable(code){
     // default all off
     data[0] = 0x00;
-.css    data[1] = 0x00;
+    data[1] = 0x00;
     data[2] = 0x00;
     data[3] = 0x00;
 
     if(8 & code){
-	data[0] = 0xAA;
+	data[0] = 0xFF;
     }
     if(4 & code){
-	data[1] = 0xAA;
+	data[1] = 0xFF;
     }
     if(2 & code){
-	data[2] = 0xAA;
+	data[2] = 0xFF;
     }
     if(1 & code){
-	data[3] = 0xAA;
+	data[3] = 0xFF;
     }
     ble.writeWithoutResponse(connected_device.id, VIB_SERVICE, VIB_CHARACTERISTIC, data.buffer, function(){
     }, function(){

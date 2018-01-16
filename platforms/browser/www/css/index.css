@@ -32,6 +32,7 @@ html, body {
     padding: 0px;
     margin: 0px;
     overflow:hidden;
+    display: none;
 }
 #btn1, #btn2, #btn3, #btn4{
     padding: 0px;
@@ -42,11 +43,9 @@ html, body {
 }
 
 
-#btn1, #btn2, #btn3 {
+#btn4, #btn2, #btn3 {
     box-sizing: border-box;
     border-color:black;
     border-width:20px;
     border-right:solid;
 }
-
-
