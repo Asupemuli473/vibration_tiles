@@ -127,6 +127,7 @@ var g_o = false;
 var score = 0;
 var steps;
 var step;
+var step_size;
 
 
 // calcs new seq and writes it to wearable
@@ -169,6 +170,7 @@ function generate_next_round(){
     if(!g_o){
 	if(sequence > 0){
 	    game_over();
+	    g_o = true;
 	}
 	else if(sequence == 0){
     	    reset_divs();
@@ -178,19 +180,14 @@ function generate_next_round(){
 	    if(duration_round > 1024 && this.round % 10 == 0){
 		duration_round = duration_round / 2;
 	    }
-	    steps = duration_round/1000*FPS;
+	    steps = Math.ceil(duration_round/1000*FPS);
 	    step = 0;
-	    var step_size_line = document.getElementById("drawing_canvas").height/steps;
-	    
-	    setTimeout(function(){
-		draw_line(step_size_line);
-	    }, 1000/FPS);
-	    setTimeout(generate_next_round, duration_round);
+	    step_size= Math.ceil(document.getElementById("drawing_canvas").height/steps);
 	}
     }
 }
 
-function draw_line(step_size){
+function draw_line(){
     if(step<steps){
 	ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
 	ctx.textAlign = "start";
@@ -203,22 +200,44 @@ function draw_line(step_size){
 	ctx.lineTo(ctx.canvas.width,step*step_size);
 	ctx.stroke();
 	step = step + 1;
-	setTimeout(function(){
-	    draw_line(step_size);
-	}, 1000/FPS);
+    }
+    else{
+	generate_next_round();
+    }
+}
+
+function vibrate_times(times){
+    if(times == 0){
+	write_to_wearable(0);
+    }
+    else{
+	write_to_wearable(15);
+	setInterval(function(){
+	    write_to_wearable(0);
+	    setInterval(function(){
+		vibrate_times(times-1);
+	    },100);
+	},100);
     }
 }
 
 function game_over(){
     // todo let vibrate three times
-    write_to_wearable(0);
-    console.log("game over");
+    clearInterval(draw_interval_id);
+    //vibrate_times(3);
+    ctx.canvas.style.zIndex = "4";
+    ctx.font = "60px Roboto Slab";
+    ctx.textAlign = "start";
+    ctx.fillText("Game over", ctx.canvas.width/2-(ctx.measureText("Game over").width/2),ctx.canvas.height/2);
+    ctx.font = "15px Roboto Slab";
 }
 
+var draw_interval_id;
 function start_game(){
     document.getElementById('welcome_screen').style.display = "none";
     document.getElementById('game_div').style.display = "block";
     generate_next_round();
+    draw_interval_id = setInterval(draw_line, 1000/FPS);
 }
 
 
