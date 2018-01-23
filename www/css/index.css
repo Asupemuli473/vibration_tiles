@@ -7,7 +7,7 @@
 }
 
 h1 {
-    font-size:2.5em;
+    font-size:2.0em;
     font-family: 'Roboto Slab';   
 }
 
@@ -34,6 +34,36 @@ html, body {
     overflow:hidden;
     display: none;
 }
+
+
+#game_over_div{
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    text-align:center;
+    top:50%;
+}
+
+#disconnected_div{
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    text-align:center;
+}
+
+#game_over_font{
+    font-size:4em;
+}
+
+#game_over_text{
+    font-size:1.5em;
+    font-family: 'Roboto Slab';
+}
+
+#score{
+    font-weight:bold;
+}
+
 #btn1, #btn2, #btn3, #btn4{
     padding: 0px;
     margin: 0px;

@@ -7,12 +7,21 @@ var ctx;
 
 document.addEventListener("deviceready", initialize, false);
 
+document.addEventListener("orientationchange", function() {
+    document.getElementById("drawing_canvas").width = document.body.clientWidth;
+    document.getElementById("drawing_canvas").height = document.body.clientHeight;
+
+    if(draw_interval_id){
+    	ctx.font = "15px Roboto Slab";
+    	clearInterval(draw_interval_id);
+    	draw_interval_id = setInterval(draw_line, 1000/FPS);
+    }
+    });
+
 var data = new Uint8Array(4);
 
 var VIB_SERVICE	       	= "713D0000-503E-4C75-BA94-3148F18D941E";
 var VIB_CHARACTERISTIC	= "713D0003-503E-4C75-BA94-3148F18D941E";
-
-
 
 function initialize(){
     var go_btn = document.getElementById("go_btn");
@@ -34,17 +43,21 @@ function initialize(){
     document.getElementById("btn2").addEventListener("touchend", div_released);
     document.getElementById("btn3").addEventListener("touchend", div_released);
     document.getElementById("btn4").addEventListener("touchend", div_released);
+    
+    document.getElementById("game_over_div").addEventListener("touchstart", restart);
 
-    document.getElementById("game_div").style.display="none";
+    document.getElementById("connect_btn2").addEvenListener("touchstart", connect_btn_touched);
+    document.getElementById("connect_btn2").addEvenListener("touchend", connect_btn_released);
+    
     document.getElementById("drawing_canvas").width = document.body.clientWidth;
     document.getElementById("drawing_canvas").height = document.body.clientHeight;
     ctx = document.getElementById("drawing_canvas").getContext('2d');
-    ctx.font = "15px Roboto Slab";
     
     document.documentElement.style.webkitTouchCallout = "none";
     document.documentElement.style.webkitUserSelect = "none";
 
 }
+
 
 function set_up_bt(){
     ble.isEnabled(function(){
@@ -65,11 +78,13 @@ function scan_and_connect_glove(){
 		document.getElementById("msg").innerHTML = "Successfully connected. Ready to play!";
 		document.getElementById("msg").style.color = "#00FF00";
 		connected = true;
+		connecting = false;
 		connected_device = device;
 	    }, function(){
-		console.log("error while connecting");
-		document.getElementById("msg").innerHTML = "Error while connecting. Make sure the device is turned on";
-		document.getElementById("msg").style.color = "#FF0000";
+		connected = false;
+		document.getElementById("game_div").style.display = "none";
+		document.getElementById("disconnected_div").style.display = "block";
+		
 	    });
 	}
     }, function() {
@@ -108,18 +123,19 @@ function go_btn_touched(event){
 }
 
 function go_btn_released(event){
-    // if(connected){
+    if(connected){
     	start_game();
-    // }
-    // else{
-    // 	event.target.setAttribute("src", "./img/go_btn.png");
-    // }
+    }
+    else{
+    	event.target.setAttribute("src", "./img/go_btn.png");
+    }
 }
 
 
 
 // game logic
-var duration_round = 4096;
+var DURATION_ROUND_INIT = 8192;
+var duration_round = DURATION_ROUND_INIT;
 var round = 0;
 var sequence = 0;
 var finger_pressed = 0;
@@ -127,12 +143,12 @@ var g_o = false;
 var score = 0;
 var steps;
 var step;
-var step_size;
+
 
 
 // calcs new seq and writes it to wearable
 function set_next_sequence(){
-    var min = 0;
+    var min = 1;
     var max = 15;
     sequence = Math.floor((Math.random() * (max - min)) + min);
     console.log(sequence);
@@ -155,6 +171,9 @@ function set_finger_pressed(num){
 	sequence = sequence - code;
 	score = score + steps - step;
 	write_to_wearable(sequence);
+	if(sequence==0){
+	    generate_next_round();
+	}
 	return true;
     }
     else {
@@ -167,6 +186,7 @@ function set_finger_pressed(num){
 
 
 function generate_next_round(){
+    clearInterval(draw_interval_id);
     if(!g_o){
 	if(sequence > 0){
 	    game_over();
@@ -182,28 +202,31 @@ function generate_next_round(){
 	    }
 	    steps = Math.ceil(duration_round/1000*FPS);
 	    step = 0;
-	    step_size= Math.ceil(document.getElementById("drawing_canvas").height/steps);
+	    draw_interval_id = setInterval(draw_line, 1000/FPS);
 	}
     }
 }
 
 function draw_line(){
-    if(step<steps){
-	ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
-	ctx.textAlign = "start";
-	ctx.fillText("Round "+(round+1),0,-5+step*step_size);
-	ctx.fillText("Round "+(round),0,step*step_size+15);
-	ctx.textAlign = "end";
-	ctx.fillText("Score "+score,ctx.canvas.width,-5+step*step_size);
-	ctx.beginPath();
-	ctx.moveTo(0,step*step_size);
-	ctx.lineTo(ctx.canvas.width,step*step_size);
-	ctx.stroke();
-	step = step + 1;
-    }
-    else{
-	generate_next_round();
-    }
+    //if(connected){
+	if(step<steps){
+	    var y = ctx.canvas.height*(step/steps)-ctx.lineWidth;
+	    ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+	    ctx.textAlign = "start";
+	    ctx.fillText("Round "+(round+1),0,y-5);
+	    ctx.fillText("Round "+(round),0,y+15);
+	    ctx.textAlign = "end";
+	    ctx.fillText("Score "+score,ctx.canvas.width,-5+y);
+	    ctx.beginPath();
+	    ctx.moveTo(0,y);
+	    ctx.lineTo(ctx.canvas.width,y);
+	    ctx.stroke();
+	    step = step + 1;
+	}
+	else{
+	    generate_next_round();
+	}
+    //}
 }
 
 function vibrate_times(times){
@@ -221,25 +244,56 @@ function vibrate_times(times){
     }
 }
 
+
 function game_over(){
-    // todo let vibrate three times
+    vibrate_times(3);
     clearInterval(draw_interval_id);
-    //vibrate_times(3);
-    ctx.canvas.style.zIndex = "4";
-    ctx.font = "60px Roboto Slab";
-    ctx.textAlign = "start";
-    ctx.fillText("Game over", ctx.canvas.width/2-(ctx.measureText("Game over").width/2),ctx.canvas.height/2);
-    ctx.font = "15px Roboto Slab";
+    draw_interval_id = 0;
+    document.getElementById("game_div").style.display="none";
+    document.getElementById("game_over_div").style.display = "block";
+    document.getElementById("score").innerHTML = score;
 }
 
 var draw_interval_id;
 function start_game(){
     document.getElementById('welcome_screen').style.display = "none";
     document.getElementById('game_div').style.display = "block";
-    generate_next_round();
-    draw_interval_id = setInterval(draw_line, 1000/FPS);
+    document.getElementById("drawing_canvas").getContext('2d').canvas.style.zIndex = "4";
+    count_down(3);
 }
 
+function count_down(digit){
+    console.log("countdown "+digit);
+    if(digit>0){
+	ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+	ctx.font = "100px Roboto Slab";
+	ctx.fillStyle = "#ff0000";
+	ctx.fillText(digit,(ctx.canvas.width-ctx.measureText(digit).width)/2,ctx.canvas.height/2-20);
+	setTimeout(function(){
+	    count_down(digit-1);
+	},1000);
+    }
+    else{
+	ctx.canvas.style.zIndex = "2";
+	ctx.fillStyle = "#000000";
+	ctx.font = "15px Roboto Slab";
+	generate_next_round();
+    }
+}
+
+
+function restart(event){
+    document.getElementById("game_over_div").style.display = "none";
+    document.getElementById("game_div").style.display="block";
+    g_o = false;
+    sequence = 0;
+    round = 0;
+    score = 0;
+    duration_round = DURATION_ROUND_INIT;
+    ctx.canvas.style.zIndex = "4";
+    ctx.textAlign = "start";
+    count_down(3);
+}
 
 
 
@@ -274,27 +328,30 @@ function btn_to_int(btn_id){
 // code is 4bit long number to determine which off the motors should be turned on
 function write_to_wearable(code){
     // default all off
-    // data[0] = 0x00;
-    // data[1] = 0x00;
-    // data[2] = 0x00;
-    // data[3] = 0x00;
+    data[0] = 0x00;
+    data[1] = 0x00;
+    data[2] = 0x00;
+    data[3] = 0x00;
 
-    // if(8 & code){
-    // 	data[0] = 0xFF;
-    // }
-    // if(4 & code){
-    // 	data[1] = 0xFF;
-    // }
-    // if(2 & code){
-    // 	data[2] = 0xFF;
-    // }
-    // if(1 & code){
-    // 	data[3] = 0xFF;
-    // }
-    // ble.writeWithoutResponse(connected_device.id, VIB_SERVICE, VIB_CHARACTERISTIC, data.buffer, function(){
-    // }, function(){
-    // 	console.log("error while writing to wearable");
-    // 	    // todo error handling here
-    // 	});
+    if(8 & code){
+    	data[0] = 0xFF;
+    }
+    if(4 & code){
+    	data[1] = 0xFF;
+    }
+    if(2 & code){
+    	data[2] = 0xFF;
+    }
+    if(1 & code){
+    	data[3] = 0xFF;
+    }
+    ble.writeWithoutResponse(connected_device.id, VIB_SERVICE, VIB_CHARACTERISTIC, data.buffer, function(){
+    }, function(){
+    	console.log("error while writing to wearable");
+    	    // todo error handling here
+    	});
     
 }
+
+
+  
