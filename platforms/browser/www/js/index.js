@@ -46,8 +46,8 @@ function initialize(){
     
     document.getElementById("game_over_div").addEventListener("touchstart", restart);
 
-    document.getElementById("connect_btn2").addEvenListener("touchstart", connect_btn_touched);
-    document.getElementById("connect_btn2").addEvenListener("touchend", connect_btn_released);
+    document.getElementById("connect_btn2").addEventListener("touchstart", connect_btn_touched);
+    document.getElementById("connect_btn2").addEventListener("touchend", reconnect);
     
     document.getElementById("drawing_canvas").width = document.body.clientWidth;
     document.getElementById("drawing_canvas").height = document.body.clientHeight;
@@ -88,10 +88,61 @@ function scan_and_connect_glove(){
 	    });
 	}
     }, function() {
+	    
+    });
+    setTimeout(function(){
+	if(!connected){
 	    document.getElementById("msg").innerHTML = "Teco Wearable 4 not found. Make sure its turned on!";
-	});	    
+	    document.getElementById('msg').style.color = "#FF0000";
+	    connecting = false;
+	}
+    }, 5000);
 }
 
+
+function reconnect_glove(){
+    ble.scan([], 5, function(device) {
+	if (device.name === "TECO Wearable 4") {
+	    ble.connect(device.id, function(){
+		connecting = false;
+		document.getElementById("game_div").style.display = "block";
+		document.getElementById("disconnected_div").style.display = "none";
+		//count_down(3);
+		//setTimeout(function(){
+		    connected = true;
+		    write_to_wearable(sequence);
+		//}, 4000);
+	    }, function(){
+		connected = false;
+		document.getElementById("game_div").style.display = "none";
+		document.getElementById("disconnected_div").style.display = "block";
+		document.getElementById("rec_msg").innerHTML = "The device has disconnected. Hit connect to reconnect";
+		document.getElementById("rec_msg").style.color = "#000000";
+	    });
+	}
+    }, function() {
+
+    });
+    setTimeout(function(){
+	if(!connected){
+	    document.getElementById("rec_msg").innerHTML = "Teco Wearable 4 not found. Make sure its turned on!";
+	    document.getElementById('rec_msg').style.color = "#FF0000";
+	    connecting = false;
+	}
+    }, 5000);
+}
+
+function reconnect(){
+    event.target.setAttribute("src", "./img/connect_btn.png");
+    ble.isEnabled(function(){
+	document.getElementById("rec_msg").innerHTML = "Scanning...";
+	document.getElementById("rec_msg").style.color = "#FFD700";
+	reconnect_glove();
+    }, function(){
+	document.getElementById("rec_msg").innerHTML = "You have to enable bluetooth."
+	document.getElementById("rec_msg").style.color = "#FF0000";
+    });
+}
     
 
 
@@ -208,45 +259,48 @@ function generate_next_round(){
 }
 
 function draw_line(){
-    //if(connected){
-	if(step<steps){
-	    var y = ctx.canvas.height*(step/steps)-ctx.lineWidth;
-	    ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
-	    ctx.textAlign = "start";
-	    ctx.fillText("Round "+(round+1),0,y-5);
-	    ctx.fillText("Round "+(round),0,y+15);
-	    ctx.textAlign = "end";
-	    ctx.fillText("Score "+score,ctx.canvas.width,-5+y);
-	    ctx.beginPath();
-	    ctx.moveTo(0,y);
-	    ctx.lineTo(ctx.canvas.width,y);
-	    ctx.stroke();
-	    step = step + 1;
-	}
-	else{
-	    generate_next_round();
-	}
-    //}
+    if(!connected){
+	return;
+    }
+    if(step<steps){
+	var y = ctx.canvas.height*(step/steps)-ctx.lineWidth;
+	ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+	ctx.textAlign = "start";
+	ctx.fillText("Round "+(round+1),0,y-5);
+	ctx.fillText("Round "+(round),0,y+15);
+	ctx.textAlign = "end";
+	ctx.fillText("Score "+score,ctx.canvas.width,-5+y);
+	ctx.beginPath();
+	ctx.moveTo(0,y);
+	ctx.lineTo(ctx.canvas.width,y);
+	ctx.stroke();
+	step = step + 1;
+	console.log("another step: "+step);
+    }
+    else{
+	generate_next_round();
+    }
 }
 
 function vibrate_times(times){
-    if(times == 0){
+    if(times < 0){
 	write_to_wearable(0);
     }
     else{
 	write_to_wearable(15);
-	setInterval(function(){
+	setTimeout(function(){
 	    write_to_wearable(0);
-	    setInterval(function(){
+	    setTimeout(function(){
 		vibrate_times(times-1);
-	    },100);
-	},100);
+	    },250);
+	},250);
     }
 }
 
 
 function game_over(){
     vibrate_times(3);
+    write_to_wearable(0);
     clearInterval(draw_interval_id);
     draw_interval_id = 0;
     document.getElementById("game_div").style.display="none";
@@ -263,7 +317,6 @@ function start_game(){
 }
 
 function count_down(digit){
-    console.log("countdown "+digit);
     if(digit>0){
 	ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
 	ctx.font = "100px Roboto Slab";
@@ -347,8 +400,9 @@ function write_to_wearable(code){
     }
     ble.writeWithoutResponse(connected_device.id, VIB_SERVICE, VIB_CHARACTERISTIC, data.buffer, function(){
     }, function(){
-    	console.log("error while writing to wearable");
-    	    // todo error handling here
+	connected = false;
+	document.getElementById("game_div").style.display = "none";
+	document.getElementById("disconnected_div").style.display = "block";
     	});
     
 }
