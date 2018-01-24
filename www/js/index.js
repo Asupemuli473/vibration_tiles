@@ -70,31 +70,35 @@ function set_up_bt(){
     });
 }
 
-
+var timeout_id;
 function scan_and_connect_glove(){
     ble.scan([], 5, function(device) {
 	if (device.name === "TECO Wearable 4") {
 	    ble.connect(device.id, function(){
 		document.getElementById("msg").innerHTML = "Connected!";
-		document.getElementById("exp").innerHTML = "Quickly turn off the motors by clicking on the buttons (left button corresponds to pinky). Press go if you're ready!";
+		document.getElementById("exp").style.display = "block";
 		document.getElementById("msg").style.color = "#00FF00";
 		connected = true;
 		connecting = false;
 		connected_device = device;
 	    }, function(){
 		connected = false;
+		document.getElementById("msg").style.color = "#000000";
+		document.getElementById("msg").innerHTML = "Power on glove and hit connect to pair with wearable!";
+		document.getElementById('exp').style.display = "none";
 		document.getElementById("game_div").style.display = "none";
 		document.getElementById("disconnected_div").style.display = "block";
-		
+		clearTimeout(timeout_id);
 	    });
 	}
     }, function() {
 	    
     });
-    setTimeout(function(){
+    timeout_id = setTimeout(function(){
 	if(!connected){
 	    document.getElementById("msg").innerHTML = "Teco Wearable 4 not found. Make sure its turned on!";
 	    document.getElementById('msg').style.color = "#FF0000";
+	    document.getElementById('exp').style.display = "none";
 	    connecting = false;
 	}
     }, 5000);
