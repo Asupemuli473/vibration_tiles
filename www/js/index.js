@@ -75,7 +75,7 @@ function scan_and_connect_glove(){
     ble.scan([], 5, function(device) {
 	if (device.name === "TECO Wearable 4") {
 	    ble.connect(device.id, function(){
-		document.getElementById("msg").innerHTML = "Successfully connected. Ready to play!";
+		document.getElementById("msg").innerHTML = "Connected!</br>Quickly turn off the motors by clicking on the buttons (left button corresponds to pinky). Press go if you're ready!";
 		document.getElementById("msg").style.color = "#00FF00";
 		connected = true;
 		connecting = false;

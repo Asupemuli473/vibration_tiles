@@ -275,7 +275,6 @@ function draw_line(){
 	ctx.lineTo(ctx.canvas.width,y);
 	ctx.stroke();
 	step = step + 1;
-	console.log("another step: "+step);
     }
     else{
 	generate_next_round();
